@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle Area Workshop - 10 Unique Challenges</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap');
+        body { font-family: 'Fredoka', sans-serif; }
+        .step-active { border-color: #3b82f6; background-color: #eff6ff; }
+        .key-btn { 
+            transition: all 0.1s;
+            user-select: none;
+        }
+        .key-btn:active { transform: scale(0.9); }
+        .used-badge {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-blue-50 min-h-screen flex items-center justify-center p-4">
+
+    <div id="game-container" class="bg-white rounded-3xl shadow-xl p-6 max-w-4xl w-full border-4 border-blue-200">
+        <!-- Header & Progress -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 border-b pb-4">
+            <h1 class="text-3xl font-bold text-blue-800">Circle Workshop 🛠️</h1>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Progress</p>
+                    <p class="text-xl font-bold text-blue-600"><span id="current-q">1</span> / 10 Circles</p>
+                </div>
+                <div class="w-32 bg-gray-200 h-4 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-blue-500 h-full transition-all duration-500" style="width: 10%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="main-workshop" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Left Side: Configuration & Visual -->
+            <div class="bg-gray-50 p-4 rounded-2xl border-2 border-dashed border-gray-300">
+                <h2 class="font-bold text-gray-700 mb-2">1. Design Your Circle</h2>
+                <p class="text-xs text-blue-600 mb-4 font-medium">Tip: You must use a different radius for every round!</p>
+                
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600">Give it a Radius (r):</label>
+                        <input type="number" id="input-radius" value="7" min="1" max="100" 
+                               class="w-full p-2 border-2 border-blue-200 rounded-lg focus:border-blue-500 outline-none"
+                               oninput="updateVisual()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-600">Pick your $\pi$:</label>
+                        <select id="input-pi" class="w-full p-2 border-2 border-blue-200 rounded-lg outline-none" onchange="updateVisual()">
+                            <option value="3.14">3.14 (Decimal)</option>
+                            <option value="22/7">22/7 (Fraction)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Visualizer -->
+                <div class="flex justify-center p-4">
+                    <div id="circle-visual" class="relative w-40 h-40 rounded-full border-4 border-blue-500 bg-blue-100 flex items-center justify-center transition-all">
+                        <div class="absolute bg-blue-800 h-1 w-1/2 left-1/2 rounded-full"></div>
+                        <span id="label-r" class="absolute text-xs font-bold text-blue-900 bg-white px-1 rounded transform translate-x-4 -translate-y-2">r=7</span>
+                    </div>
+                </div>
+
+                <!-- Used Numbers Log -->
+                <div class="mt-4">
+                    <p class="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Radii used so far:</p>
+                    <div id="used-radii-list" class="flex flex-wrap gap-2">
+                        <!-- Badges appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: The Challenge -->
+            <div class="flex flex-col justify-between">
+                <div>
+                    <h2 class="font-bold text-gray-700 mb-4">2. Solve the Area</h2>
+                    
+                    <!-- Step 1: Number Sentence Builder -->
+                    <div id="step-1-box" class="p-4 rounded-xl border-2 border-gray-200 mb-4 transition-all">
+                        <p class="text-sm font-bold text-blue-700 mb-2">Step 1: Build the Number Sentence</p>
+                        
+                        <div class="bg-white border-2 border-blue-100 rounded-lg p-3 min-h-[50px] flex items-center justify-center text-xl font-mono mb-4 overflow-hidden" id="sentence-display"></div>
+
+                        <div id="keypad" class="grid grid-cols-3 gap-2 mb-4"></div>
+
+                        <div class="flex gap-2">
+                            <button onclick="clearSentence()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-300">Clear</button>
+                            <button id="sentence-submit-btn" onclick="checkSentence()" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700">Check</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Final Answer -->
+                    <div id="step-2-box" class="p-4 rounded-xl border-2 border-gray-100 opacity-50 pointer-events-none transition-all">
+                        <p class="text-sm font-bold text-green-700 mb-2">Step 2: Calculate Final Area</p>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="answer-input" placeholder="Total Area" 
+                                   class="flex-1 p-2 border rounded-lg text-sm outline-none">
+                            <button onclick="checkFinalAnswer()" class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-green-700 font-bold">Submit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guidance/Hint -->
+                <div id="guidance-box" class="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl min-h-[80px]">
+                    <p class="text-sm text-orange-800" id="guidance-text">Choose a radius to start!</p>
+                    <button onclick="showDeepHint()" id="hint-btn" class="mt-2 text-xs font-bold text-orange-600 underline hidden">Show calculation hint</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden p-4 z-50">
+            <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl">
+                <div class="text-5xl mb-4" id="modal-icon">🌟</div>
+                <h3 class="text-2xl font-bold text-blue-800 mb-2" id="modal-title">Excellent!</h3>
+                <p id="success-msg" class="text-gray-600 mb-6"></p>
+                <button id="modal-btn" onclick="nextQuestion()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-blue-700">Next Challenge</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            questionCount: 1,
+            maxQuestions: 10,
+            currentRadius: 7,
+            currentPi: "3.14",
+            sentenceTokens: [],
+            isSentenceLocked: false,
+            usedRadii: []
+        };
+
+        function updateVisual() {
+            gameState.currentRadius = parseFloat(document.getElementById('input-radius').value) || 0;
+            gameState.currentPi = document.getElementById('input-pi').value;
+            
+            document.getElementById('label-r').innerText = 'r=' + gameState.currentRadius;
+            renderKeypad();
+            
+            if (!gameState.isSentenceLocked) {
+                // Check if radius is already used
+                if (gameState.usedRadii.includes(gameState.currentRadius)) {
+                    document.getElementById('guidance-text').innerText = `⚠️ You already used radius ${gameState.currentRadius}! Please pick a different number.`;
+                    document.getElementById('sentence-submit-btn').disabled = true;
+                } else {
+                    document.getElementById('guidance-text').innerText = `Build the formula for Circle #${gameState.questionCount} using ${gameState.currentPi} and ${gameState.currentRadius}.`;
+                    document.getElementById('sentence-submit-btn').disabled = false;
+                }
+            }
+        }
+
+        function renderKeypad() {
+            const keypad = document.getElementById('keypad');
+            keypad.innerHTML = '';
+            
+            const buttons = [
+                { label: gameState.currentPi, value: gameState.currentPi, type: 'pi' },
+                { label: '×', value: '×', type: 'op' },
+                { label: gameState.currentRadius, value: gameState.currentRadius, type: 'radius' }
+            ];
+
+            buttons.forEach(btn => {
+                const b = document.createElement('button');
+                b.innerText = btn.label;
+                b.className = `key-btn p-3 rounded-xl font-bold text-lg shadow-sm ${btn.type === 'op' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-800'}`;
+                b.onclick = () => addToken(btn.value);
+                keypad.appendChild(b);
+            });
+        }
+
+        function addToken(val) {
+            if (gameState.isSentenceLocked) return;
+            gameState.sentenceTokens.push(val);
+            updateSentenceDisplay();
+        }
+
+        function clearSentence() {
+            if (gameState.isSentenceLocked) return;
+            gameState.sentenceTokens = [];
+            updateSentenceDisplay();
+        }
+
+        function updateSentenceDisplay() {
+            const display = document.getElementById('sentence-display');
+            display.innerText = gameState.sentenceTokens.join(' ');
+        }
+
+        function checkSentence() {
+            const r = String(gameState.currentRadius);
+            const pi = String(gameState.currentPi);
+            const s = gameState.sentenceTokens.join('');
+            
+            const p1 = pi + "×" + r + "×" + r;
+            const p2 = r + "×" + r + "×" + pi;
+
+            if (s === p1 || s === p2) {
+                gameState.isSentenceLocked = true;
+                document.getElementById('step-1-box').className = "p-4 rounded-xl border-2 border-green-200 bg-green-50 mb-4";
+                document.getElementById('step-2-box').className = "p-4 rounded-xl border-2 step-active";
+                document.getElementById('step-2-box').style.pointerEvents = "auto";
+                document.getElementById('step-2-box').style.opacity = "1";
+                document.getElementById('sentence-submit-btn').disabled = true;
+                document.getElementById('keypad').classList.add('opacity-50');
+                document.getElementById('input-radius').disabled = true;
+                document.getElementById('input-pi').disabled = true;
+                
+                document.getElementById('guidance-text').innerText = "Correct formula! Now calculate the area.";
+                document.getElementById('hint-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('guidance-text').innerText = "❌ Remember: Area = π × r × r";
+            }
+        }
+
+        function checkFinalAnswer() {
+            const userVal = parseFloat(document.getElementById('answer-input').value);
+            const r = gameState.currentRadius;
+            let piVal = gameState.currentPi === '22/7' ? (22/7) : 3.14;
+            const correct = piVal * r * r;
+
+            if (Math.abs(userVal - correct) < 0.1) {
+                gameState.usedRadii.push(r);
+                updateUsedRadiiLog();
+
+                if (gameState.questionCount >= gameState.maxQuestions) {
+                    showFinalSuccess();
+                } else {
+                    document.getElementById('success-msg').innerText = `Circle #${gameState.questionCount} mastered! Radius ${r} logged.`;
+                    document.getElementById('success-modal').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('guidance-text').innerText = "❌ Keep calculating! Check your multiplication.";
+            }
+        }
+
+        function updateUsedRadiiLog() {
+            const container = document.getElementById('used-radii-list');
+            container.innerHTML = '';
+            gameState.usedRadii.forEach(r => {
+                const span = document.createElement('span');
+                span.className = "used-badge bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold border border-blue-200";
+                span.innerText = r;
+                container.appendChild(span);
+            });
+        }
+
+        function showFinalSuccess() {
+            document.getElementById('modal-icon').innerText = "🏆";
+            document.getElementById('modal-title').innerText = "Master Architect!";
+            document.getElementById('success-msg').innerText = "You successfully designed and solved 10 unique circles!";
+            document.getElementById('modal-btn').innerText = "Play Again";
+            document.getElementById('modal-btn').onclick = () => location.reload();
+            document.getElementById('success-modal').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            gameState.questionCount++;
+            gameState.isSentenceLocked = false;
+            gameState.sentenceTokens = [];
+            
+            // UI Resets
+            document.getElementById('current-q').innerText = gameState.questionCount;
+            document.getElementById('progress-bar').style.width = (gameState.questionCount * 10) + '%';
+            document.getElementById('success-modal').classList.add('hidden');
+            document.getElementById('answer-input').value = '';
+            document.getElementById('sentence-display').innerText = '';
+            document.getElementById('step-1-box').className = "p-4 rounded-xl border-2 step-active mb-4 transition-all";
+            document.getElementById('step-2-box').className = "p-4 rounded-xl border-2 border-gray-100 opacity-50 pointer-events-none transition-all";
+            document.getElementById('sentence-submit-btn').disabled = false;
+            document.getElementById('keypad').classList.remove('opacity-50');
+            document.getElementById('input-radius').disabled = false;
+            document.getElementById('input-pi').disabled = false;
+            
+            // Suggest a new radius that hasn't been used
+            let nextR = gameState.currentRadius + 1;
+            while(gameState.usedRadii.includes(nextR)) { nextR++; }
+            document.getElementById('input-radius').value = nextR;
+            
+            updateVisual();
+        }
+
+        function showDeepHint() {
+            const r = gameState.currentRadius;
+            const pi = gameState.currentPi;
+            if (pi === '22/7') {
+                document.getElementById('guidance-text').innerText = `Tip: Calculate 22 × ${r} × ${r}, then divide the result by 7.`;
+            } else {
+                document.getElementById('guidance-text').innerText = `Tip: First find ${r} × ${r} = ${r*r}. Then do ${r*r} × 3.14.`;
+            }
+        }
+
+        updateVisual();
+    </script>
+</body>
+</html>
